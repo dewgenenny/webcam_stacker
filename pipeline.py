@@ -94,30 +94,26 @@ def process_super_resolution():
                 ref_gray, frame['gray'], warp_matrix, warp_mode, criteria
             )
             
-            # DEBUG: Print first few matrices
-            if i < 5:
-                print(f"[*] Alignment Matrix {i+1}:\n{warp_matrix}")
+            # Strategy: Resize frame to 2x FIRST, then apply translation
+            # This is much more robust than trying to scale the warp matrix
+            frame_big = cv2.resize(frame['img'], (w * SUPER_RES_SCALE, h * SUPER_RES_SCALE), interpolation=cv2.INTER_CUBIC)
+
+            # Extract translation from low-res ECC and scale it for the high-res canvas
+            tx = warp_matrix[0, 2] * SUPER_RES_SCALE
+            ty = warp_matrix[1, 2] * SUPER_RES_SCALE
             
-            # The matrix maps from this canvas (1280x960) back to the source frame (640x480)
-            # We must scale the coordinate lookup by 1/SUPER_RES_SCALE
-            # AND the translation remains in the source frame's coordinate space.
-            M_final = warp_matrix.copy()
-            M_final[:, :2] /= SUPER_RES_SCALE
-            
-            if i < 5:
-                print(f"[*] Scaled Matrix {i+1}:\n{M_final}")
+            # Construct a pure translation matrix for the big frame
+            M_final = np.array([
+                [1, 0, tx],
+                [0, 1, ty]
+            ], dtype=np.float32)
 
             aligned_img = cv2.warpAffine(
-                frame['img'], M_final,
+                frame_big, M_final,
                 (w * SUPER_RES_SCALE, h * SUPER_RES_SCALE),
                 flags=cv2.INTER_LINEAR
             )
             
-            # DEBUG: Check if aligned_img is mostly empty
-            if i < 5:
-                nz = np.count_nonzero(aligned_img)
-                print(f"[*] Aligned Image {i+1} has {nz} non-zero pixels (Canvas size: {w*h*SUPER_RES_SCALE**2})")
-
             cv2.imwrite(os.path.join(aligned_dir, f"aligned_{i+1:03d}.png"), aligned_img)
             
             if (i+1) % 10 == 0:
