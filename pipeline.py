@@ -93,15 +93,31 @@ def process_super_resolution():
             _, warp_matrix = cv2.findTransformECC(
                 ref_gray, frame['gray'], warp_matrix, warp_mode, criteria
             )
-            warp_matrix[:, :2] /= SUPER_RES_SCALE
+            
+            # DEBUG: Print first few matrices
+            if i < 5:
+                print(f"[*] Alignment Matrix {i+1}:\n{warp_matrix}")
+            
+            # The matrix maps from this canvas (1280x960) back to the source frame (640x480)
+            # We must scale the coordinate lookup by 1/SUPER_RES_SCALE
+            # AND the translation remains in the source frame's coordinate space.
+            M_final = warp_matrix.copy()
+            M_final[:, :2] /= SUPER_RES_SCALE
+            
+            if i < 5:
+                print(f"[*] Scaled Matrix {i+1}:\n{M_final}")
 
             aligned_img = cv2.warpAffine(
-                frame['img'], warp_matrix,
+                frame['img'], M_final,
                 (w * SUPER_RES_SCALE, h * SUPER_RES_SCALE),
                 flags=cv2.INTER_LINEAR
             )
             
-            # Use a slightly higher quality PNG for intermediate steps if needed
+            # DEBUG: Check if aligned_img is mostly empty
+            if i < 5:
+                nz = np.count_nonzero(aligned_img)
+                print(f"[*] Aligned Image {i+1} has {nz} non-zero pixels (Canvas size: {w*h*SUPER_RES_SCALE**2})")
+
             cv2.imwrite(os.path.join(aligned_dir, f"aligned_{i+1:03d}.png"), aligned_img)
             
             if (i+1) % 10 == 0:
