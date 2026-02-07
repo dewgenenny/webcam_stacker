@@ -12,7 +12,7 @@ WORK_DIR = os.path.abspath("webcam_work")
 OUTPUT_BASE_NAME = os.path.abspath("final_super_res")
 
 # Burst Settings
-FRAME_COUNT = 100
+FRAME_COUNT = 500
 FPS_CAPTURE = 10
 SUPER_RES_SCALE = 2
 
