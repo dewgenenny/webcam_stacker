@@ -100,7 +100,10 @@ def process_super_resolution():
                 (w * SUPER_RES_SCALE, h * SUPER_RES_SCALE),
                 flags=cv2.INTER_LINEAR
             )
+            
+            # Use a slightly higher quality PNG for intermediate steps if needed
             cv2.imwrite(os.path.join(aligned_dir, f"aligned_{i+1:03d}.png"), aligned_img)
+            
             if (i+1) % 10 == 0:
                 print(f"[*] Aligned {i+1} frames...")
         except cv2.error:
@@ -179,3 +182,4 @@ if __name__ == "__main__":
     capture_burst()
     aligned_folder = process_super_resolution()
     run_siril_stack(aligned_folder)
+    post_process_image()
