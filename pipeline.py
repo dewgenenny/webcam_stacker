@@ -98,9 +98,11 @@ def process_super_resolution():
             aligned_img = cv2.warpAffine(
                 frame['img'], warp_matrix,
                 (w * SUPER_RES_SCALE, h * SUPER_RES_SCALE),
-                flags=cv2.INTER_LINEAR + cv2.WARP_INVERSE_MAP
+                flags=cv2.INTER_LINEAR
             )
             cv2.imwrite(os.path.join(aligned_dir, f"aligned_{i+1:03d}.png"), aligned_img)
+            if (i+1) % 10 == 0:
+                print(f"[*] Aligned {i+1} frames...")
         except cv2.error:
             pass
 
